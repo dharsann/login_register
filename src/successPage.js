@@ -1,12 +1,12 @@
 import React from "react";
-import SuccessAlert from "./successAlert";
+import successAlert from "./successAlert";
 
-const SuccessPage = ({ message }) => {
+const successPage = ({ message }) => {
   return (
     <div className="success-page">
-      <SuccessAlert message={message} />
+      <successAlert message={message} />
     </div>
   );
 };
 
-export default SuccessPage;
+export default successPage;

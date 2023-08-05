@@ -1,65 +1,70 @@
-import React, { useState } from "react";
-import SuccessPage from "./successPage";
-import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
+import React, { useState } from 'react';
+import firebase from 'firebase/compat/app';
+import bcrypt from 'bcryptjs';
+import successPage from './successPage';
+import 'firebase/compat/auth';
 
-const firebaseConfig = {
-    // Your Firebase config
-    apiKey: "AIzaSyDgYJBUmNbnf0evF4SVouoz9yEz2GDTPDA",
-    authDomain: "form-d5f26.firebaseapp.com",
-    databaseURL: "https://form-d5f26-default-rtdb.firebaseio.com",
-    projectId: "form-d5f26",
-    storageBucket: "form-d5f26.appspot.com",
-    messagingSenderId: "604162368133",
-    appId: "1:604162368133:web:9a0b279d53969f624dbfec",
-    measurementId: "G-327J70BZV2"
+const Login = (props) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [showSuccessPage, setShowSuccessPage] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      // Retrieve the user document from Firestore based on the provided username
+      const querySnapshot = await firebase
+        .firestore()
+        .collection('users')
+        .where('username', '==', username)
+        .get();
+
+      if (querySnapshot.empty) {
+        setLoginError('User not found. Please check your username.');
+        return;
+      }
+
+      const userDocument = querySnapshot.docs[0].data();
+      const hashedPassword = userDocument.password;
+
+      // Compare the provided password with the hashed password from Firestore
+      const passwordMatch = await bcrypt.compare(password, hashedPassword);
+
+      if (!passwordMatch) {
+        setLoginError('Invalid password. Please try again.');
+        return;
+      }
+
+      // Authentication successful, perform your login logic here...
+      console.log('Login successful!');
+
+      // Reset the input fields after successful login
+      setUsername('');
+      setPassword('');
+    } catch (error) {
+      console.error('Error during login:', error);
+      setLoginError('An error occurred during login. Please try again later.');
+    }
   };
-  
-const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
-export const Login = (props) => {
-    const [email, setEmail] = useState('');
-    const [pass, setPass] = useState('');
-    const [showSuccessPage, setShowSuccessPage] = useState(false);
+  // If showSuccessPage is true, redirect to the success page
+  if (showSuccessPage) {
+    return <successPage message="Login successful!" />;
+  }
 
-    const handleSubmit = async(e) => {
-        try{
-            e.preventDefault();
-
-             // Check if the user exists in the Firebase database
-            const usersRef = collection(firestore, "users");
-            const querySnapshot = await getDocs(query(usersRef, where("email", "==", email)));
-
-            
-        // If the user exists in the database, show the success page
-        if (!querySnapshot.empty) {
-            setShowSuccessPage(true);
-            // Clear the form fields
-            setEmail('');
-            setPass('');
-        } else {
-            console.error("User not found. Please check your credentials.");
-        }
-    }catch (error) {
-            console.error("Error logging in:", error.message);
-          }
-    }
-    // If showSuccessPage is true, redirect to the success page
-    if (showSuccessPage) {
-        return <SuccessPage message="Login successful!" />;
-    }
-
-    return (
-        <div className="auth-form-container">
-            <h2>Login</h2>
-            <form className="login-form" onSubmit={handleSubmit}>
-                <label htmlFor="email">email</label>
-                <input value={email} onChange={(e) => setEmail(e.target.value)}type="email" placeholder="youremail@gmail.com" id="email" name="email" />
-                <label htmlFor="password">password</label>
-                <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="********" id="password" name="password" />
-                <button type="submit">Log In</button>
-            </form>
-            <button className="link-btn" onClick={() => props.onFormSwitch('register')}>Don't have an account? Register here.</button>
-        </div>
-    )
+  return (
+    <div className="auth-form-container">
+        <h2>Login</h2>
+        <form className="login-form" onSubmit={handleSubmit}>
+            <label htmlFor="email">email</label>
+            <input value={username} onChange={(e) => setUsername(e.target.value)}type="email" placeholder="youremail@gmail.com" id="email" name="email" />
+            <label htmlFor="password">password</label>
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="********" id="password" name="password" />
+            <button type="submit">Log In</button>
+        </form>
+        <button className="link-btn" onClick={() => props.onFormSwitch('register')}>Don't have an account? Register here.</button>
+    </div>
+)
 }
+export default Login;
