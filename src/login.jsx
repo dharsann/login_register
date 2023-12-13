@@ -7,6 +7,7 @@ import 'firebase/compat/auth';
 const Login = (props) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [showSuccessPage, setShowSuccessPage] = useState(false);
 
   const handleSubmit = async (e) => {
